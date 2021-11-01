@@ -7,14 +7,13 @@ plugins {
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
-    implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
-    
+
     implementation("org.springframework.boot:spring-boot-starter-amqp")
     testImplementation("org.springframework.amqp:spring-rabbit-test")
 
     implementation("org.springframework.boot:spring-boot-starter-websocket")
 
-    runtimeOnly("org.postgresql:postgresql")
+    implementation("org.xerial:sqlite-jdbc:3.36.0.3")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")

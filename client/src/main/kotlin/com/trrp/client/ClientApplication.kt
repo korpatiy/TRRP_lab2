@@ -8,4 +8,5 @@ class ClientApplication
 
 fun main(args: Array<String>) {
     runApplication<ClientApplication>(*args)
+    println("Hi! by client")
 }
