@@ -5,11 +5,9 @@ spring:
     driver-class-name: org.postgresql.Driver
     username: postgres
     password: postgres
-    url: jdbc:postgresql://db:5432/biathlon
+    url: jdbc:postgresql://localhost:5430/biathlon
   rabbitmq:
     port: 5672
-    host: rabbitmq
+    host: localhost
     username: guest
     password: guest
-server:
-  port: 9090

@@ -10,6 +10,12 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=biathlon
 
+  rabbitmq:
+    image: 'rabbitmq:management-alpine'
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
   client:
     build:
       context: ./client
@@ -18,12 +24,14 @@ services:
       - "8080:8080"
     depends_on:
       - db
+      - rabbitmq
 
   server:
     build:
       context: ./server
       dockerfile: Dockerfile
     ports:
-      - "9090:8080"
+      - "9090:9090"
     depends_on:
       - db
+      - rabbitmq
