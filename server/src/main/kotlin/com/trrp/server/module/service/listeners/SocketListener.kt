@@ -21,7 +21,7 @@ class SocketListener(
 
     @Bean
     fun serverBuild() {
-        val serverPort = 9091
+        val serverPort = 9090
         val serverSocket = ServerSocket(serverPort)
         serverSocket.soTimeout = 600000
         logger.info("[SERVER] : слушаю сообщения через сокеты...")
@@ -48,5 +48,6 @@ class SocketListener(
         dataIn.close()
         dataOut.close()
         socket.close()
+        serverSocket.close()
     }
 }

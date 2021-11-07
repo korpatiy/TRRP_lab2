@@ -90,7 +90,7 @@ class MessageSendService(
 
     fun sendSocketMessage() {
         logger.info("[CLIENT] : отправка запроса на получение RSA ключа")
-        val socket = Socket("localhost", 9091)
+        val socket = Socket("localhost", 9090)
         socket.soTimeout = 6000000
 
         val dataOut = DataOutputStream(socket.getOutputStream())
