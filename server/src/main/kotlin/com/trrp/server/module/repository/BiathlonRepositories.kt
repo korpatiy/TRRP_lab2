@@ -3,6 +3,8 @@ package com.trrp.server.module.repository
 import com.trrp.server.model.*
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
+import java.time.LocalDate
+import java.time.LocalDateTime
 
 @Repository
 interface ChampionshipRepository : JpaRepository<Championship, Long> {
@@ -25,7 +27,16 @@ interface DisciplineRepository : JpaRepository<Discipline, Long> {
 }
 
 @Repository
-interface RaceRepository : JpaRepository<Race, Long>
+interface RaceRepository : JpaRepository<Race, Long> {
+    fun findByStageAndTrackAndDisciplineAndSexAndDateAndStartTime(
+        stage: Stage,
+        track: Track,
+        discipline: Discipline,
+        sex: String,
+        date: LocalDate,
+        startTime: LocalDateTime
+    ): Race?
+}
 
 @Repository
 interface StageRepository : JpaRepository<Stage, Long> {

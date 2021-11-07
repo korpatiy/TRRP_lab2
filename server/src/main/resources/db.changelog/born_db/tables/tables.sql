@@ -82,7 +82,8 @@ create table t_race
             references t_discipline,
     sex        varchar(50) not null,
     date       date        not null,
-    start_time timestamp   not null
+    start_time timestamp   not null,
+    unique (stage_id, track_id, disc_id, sex, date, start_time)
 );
 
 create table t_coach

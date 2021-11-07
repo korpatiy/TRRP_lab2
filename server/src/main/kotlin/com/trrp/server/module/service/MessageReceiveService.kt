@@ -13,7 +13,9 @@ import javax.crypto.Cipher
 import javax.crypto.spec.SecretKeySpec
 
 @Service
-class MessageReceiveService {
+class MessageReceiveService(
+    private val migrationService: MigrationService
+) {
 
     companion object {
         private val logger = LoggerFactory.getLogger(MessageReceiveService::class.java)
@@ -30,12 +32,9 @@ class MessageReceiveService {
     fun receiveRequestRabbitMessage(message: String): String? {
         logger.info("[SERVER] : принято сообщение $message")
         generateKeys()
-        publicKey?.let {
-            val encodeToString = Base64.getEncoder().encodeToString(publicKey?.encoded)
-            logger.info("[SERVER] : генерация и отправка RSA ключа... $encodeToString")
-            return encodeToString
-        }
-        return null
+        val encodeToString = Base64.getEncoder().encodeToString(publicKey?.encoded)
+        logger.info("[SERVER] : генерация и отправка RSA ключа... $encodeToString")
+        return encodeToString
     }
 
     fun generateKeys() {
@@ -49,17 +48,25 @@ class MessageReceiveService {
     @RabbitListener(queues = ["data-queue"])
     fun receiveDataRabbitMessage(dataMessageDTO: DataMessageDTO) {
         logger.info("[SERVER] : приняты данные")
-
+        var decodeMessage = ""
         privateKey?.let {
             try {
-                decodeMessage(dataMessageDTO)
+                decodeMessage = decodeMessage(dataMessageDTO)
             } catch (e: Exception) {
                 logger.warn("[SERVER] : возникла ошибка при расшифровке сообщения")
             }
         }
+        if (decodeMessage.isNotEmpty()) {
+            try {
+                migrationService.migrate(decodeMessage)
+            } catch (e: Exception) {
+                logger.warn("[SERVER] : возникла ошибка при миграции данных")
+            }
+        }
+        logger.info("[SERVER] : данные успешно перенесены")
     }
 
-    private fun decodeMessage(dataMessageDTO: DataMessageDTO) {
+    private fun decodeMessage(dataMessageDTO: DataMessageDTO): String {
         val decodeKey = Base64.getDecoder().decode(dataMessageDTO.decodeKey)
         val cipherRSA = Cipher.getInstance("RSA")
         cipherRSA.init(Cipher.DECRYPT_MODE, privateKey)
@@ -73,6 +80,7 @@ class MessageReceiveService {
         val decryptedMessageBytes = decryptCipher.doFinal(Base64.getDecoder().decode(dataMessageDTO.data))
         val decryptedMessage = String(decryptedMessageBytes, StandardCharsets.UTF_8)
         logger.info("[SERVER] : расшифрованное сообщение $decryptedMessage")
+        return decryptedMessage
     }
 
 }

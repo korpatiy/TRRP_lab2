@@ -1,6 +1,9 @@
 package com.trrp.client.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.google.gson.Gson
+import com.google.gson.JsonArray
+import com.google.gson.JsonObject
 import com.trrp.client.model.DataMessageDTO
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.core.Message
@@ -10,12 +13,13 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.stereotype.Service
 import java.nio.charset.StandardCharsets
 import java.security.KeyFactory
-import java.security.KeyPairGenerator
 import java.security.spec.X509EncodedKeySpec
+import java.sql.DriverManager
 import java.util.*
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.spec.SecretKeySpec
+
 
 @Service
 class MessageSendService(
@@ -27,6 +31,30 @@ class MessageSendService(
         private const val REQUEST_QUEUE = "request-queue"
         private const val DATA_QUEUE = "data-queue"
         private val logger = LoggerFactory.getLogger(MessageSendService::class.java)
+        private const val DB_URL = "jdbc:sqlite:client/src/main/resources/biathlon-lite.db"
+    }
+
+    private fun extractData(): JsonArray {
+        Class.forName("org.sqlite.JDBC")
+        val conn =
+            DriverManager.getConnection(DB_URL)
+        val createStatement = conn.createStatement()
+        val resultSet = createStatement.executeQuery("select * from t_biathlon")
+
+        val jsonArray = JsonArray()
+        while (resultSet.next()) {
+            val totalColumns = resultSet.metaData.columnCount
+            val obj = JsonObject()
+            for (i in 0 until totalColumns) {
+                val toJsonTree = Gson().toJsonTree(resultSet.getObject(i + 1))
+                obj.add(resultSet.metaData.getColumnLabel(i + 1), toJsonTree)
+            }
+            jsonArray.add(obj)
+        }
+
+        resultSet.close()
+        conn.close()
+        return jsonArray
     }
 
     private fun encodeMessage(publicRSAKey: String, message: String): DataMessageDTO {
@@ -57,19 +85,20 @@ class MessageSendService(
         )
     }
 
-    fun sendReceiveRequestRMQ(message: String) {
+    fun sendReceiveRequestRMQ() {
         logger.info("[CLIENT] : отправка запроса на получение RSA ключа")
         val publicRSAKey: String?
         try {
             publicRSAKey =
-                rabbitTemplate.convertSendAndReceive(REQUEST_QUEUE, "Hi from client! Дай ключ") as String?
+                rabbitTemplate.convertSendAndReceive(REQUEST_QUEUE, "Hi from client PC! Дай ключ") as String?
         } catch (e: Exception) {
             logger.warn("[CLIENT] : ошибка при отправке или получении запроса к серверу")
             return
         }
 
         logger.info("[CLIENT] : шифрование и отправка данных")
-        val preparedMessage = publicRSAKey?.let { encodeMessage(it, message) }
+        val extractData = extractData()
+        val preparedMessage = publicRSAKey?.let { encodeMessage(it, extractData.toString()) }
         if (preparedMessage != null) {
             val orderJson: String = objectMapper.writeValueAsString(preparedMessage)
             val message1: Message = MessageBuilder

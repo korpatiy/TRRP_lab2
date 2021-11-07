@@ -18,7 +18,6 @@ class MessageSendController(
 
     @GetMapping("/v2")
     fun sendRabbitMessage() {
-        val secretMessage = "КАК ЖЕ СЛОЖНО, ВЫРУБАЙТЕ, Я ЗАДУШЕН, ПОМОХИТЕ"
-        messageSender.sendReceiveRequestRMQ(secretMessage)
+        messageSender.sendReceiveRequestRMQ()
     }
 }
