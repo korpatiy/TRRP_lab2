@@ -1,6 +1,6 @@
 package com.trrp.server.module.repository
 
-import com.trrp.server.model.*
+import com.trrp.server.model.entity.*
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 import java.time.LocalDate

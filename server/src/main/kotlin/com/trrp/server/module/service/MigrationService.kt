@@ -3,7 +3,7 @@ package com.trrp.server.module.service
 
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.trrp.server.model.*
+import com.trrp.server.model.entity.*
 import com.trrp.server.module.repository.*
 import org.springframework.stereotype.Service
 import java.time.LocalDate

@@ -1,61 +1,43 @@
 package com.trrp.server.module.service
 
+import com.trrp.server.model.RSAGen
 import com.trrp.server.model.dtos.DataMessageDTO
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.rabbit.annotation.RabbitListener
-import org.springframework.stereotype.Service
-import java.nio.charset.StandardCharsets
-import java.security.KeyPairGenerator
-import java.security.PrivateKey
-import java.security.PublicKey
+import org.springframework.stereotype.Component
 import java.util.*
-import javax.crypto.Cipher
-import javax.crypto.spec.SecretKeySpec
 
-@Service
+
+@Component
 class MessageReceiveService(
-    private val migrationService: MigrationService
+    private val migrationService: MigrationService,
+    private val messageDecoderService: MessageDecoderService
 ) {
 
     companion object {
         private val logger = LoggerFactory.getLogger(MessageReceiveService::class.java)
-        private var privateKey: PrivateKey? = null
-        private var publicKey: PublicKey? = null
+        private lateinit var rsaGen: RSAGen
     }
 
-    /*fun receiveServletMessage(message: String): String {
-        logger.info("received message: $message")
-        return "hi from server"
-    }*/
-
-    @RabbitListener(queues = ["request-queue"])
-    fun receiveRequestRabbitMessage(message: String): String? {
+    fun receiveRequestMessage(message: String): String? {
         logger.info("[SERVER] : принято сообщение $message")
-        generateKeys()
-        val encodeToString = Base64.getEncoder().encodeToString(publicKey?.encoded)
+        rsaGen = RSAGen()
+        val encodeToString = Base64.getEncoder().encodeToString(rsaGen.publicKey?.encoded)
         logger.info("[SERVER] : генерация и отправка RSA ключа... $encodeToString")
         return encodeToString
     }
 
-    fun generateKeys() {
-        val generator = KeyPairGenerator.getInstance("RSA")
-        generator.initialize(512)
-        val pair = generator.generateKeyPair()
-        privateKey = pair.private
-        publicKey = pair.public
-    }
-
-    @RabbitListener(queues = ["data-queue"])
-    fun receiveDataRabbitMessage(dataMessageDTO: DataMessageDTO) {
+    fun receiveDataMessage(dataMessageDTO: DataMessageDTO) {
         logger.info("[SERVER] : приняты данные")
         var decodeMessage = ""
-        privateKey?.let {
+        rsaGen.privateKey?.let {
             try {
-                decodeMessage = decodeMessage(dataMessageDTO)
+                decodeMessage = messageDecoderService.decodeMessage(dataMessageDTO, rsaGen)
             } catch (e: Exception) {
                 logger.warn("[SERVER] : возникла ошибка при расшифровке сообщения")
             }
         }
+        logger.info("[SERVER] : расшифрованное сообщение $decodeMessage")
         if (decodeMessage.isNotEmpty()) {
             try {
                 migrationService.migrate(decodeMessage)
@@ -65,22 +47,4 @@ class MessageReceiveService(
         }
         logger.info("[SERVER] : данные успешно перенесены")
     }
-
-    private fun decodeMessage(dataMessageDTO: DataMessageDTO): String {
-        val decodeKey = Base64.getDecoder().decode(dataMessageDTO.decodeKey)
-        val cipherRSA = Cipher.getInstance("RSA")
-        cipherRSA.init(Cipher.DECRYPT_MODE, privateKey)
-        val decryptedDES = cipherRSA.doFinal(decodeKey)
-
-        val decryptCipher = Cipher.getInstance("DES")
-        val decodeDES = Base64.getDecoder().decode(decryptedDES)
-        val secretKeySpec = SecretKeySpec(decodeDES, "DES")
-        decryptCipher.init(Cipher.DECRYPT_MODE, secretKeySpec)
-
-        val decryptedMessageBytes = decryptCipher.doFinal(Base64.getDecoder().decode(dataMessageDTO.data))
-        val decryptedMessage = String(decryptedMessageBytes, StandardCharsets.UTF_8)
-        logger.info("[SERVER] : расшифрованное сообщение $decryptedMessage")
-        return decryptedMessage
-    }
-
 }

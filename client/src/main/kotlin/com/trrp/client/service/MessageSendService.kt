@@ -11,6 +11,8 @@ import org.springframework.amqp.core.MessageBuilder
 import org.springframework.amqp.core.MessageProperties
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.stereotype.Service
+import java.io.DataInputStream
+import java.net.Socket
 import java.nio.charset.StandardCharsets
 import java.security.KeyFactory
 import java.security.spec.X509EncodedKeySpec
@@ -20,6 +22,7 @@ import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.spec.SecretKeySpec
 
+import java.io.DataOutputStream
 
 @Service
 class MessageSendService(
@@ -57,7 +60,7 @@ class MessageSendService(
         return jsonArray
     }
 
-    private fun encodeMessage(publicRSAKey: String, message: String): DataMessageDTO {
+    private fun encodeMessage(publicRSAKey: String): DataMessageDTO {
         /* Декодирование RSA ключа */
         val keySpecRSA = X509EncodedKeySpec(Base64.getDecoder().decode(publicRSAKey.toByteArray()))
         val publicKey = KeyFactory.getInstance("RSA").generatePublic(keySpecRSA)
@@ -77,7 +80,7 @@ class MessageSendService(
         val cipherDES: Cipher = Cipher.getInstance("DES")
         val decode = Base64.getDecoder().decode(secretDESKey)
         cipherDES.init(Cipher.ENCRYPT_MODE, SecretKeySpec(decode, "DES"))
-        val encryptedMessageBytes = cipherDES.doFinal(message.toByteArray(StandardCharsets.UTF_8))
+        val encryptedMessageBytes = cipherDES.doFinal(extractData().toString().toByteArray(StandardCharsets.UTF_8))
 
         return DataMessageDTO(
             decodeKey = Base64.getEncoder().encodeToString(encryptedDES),
@@ -85,20 +88,49 @@ class MessageSendService(
         )
     }
 
-    fun sendReceiveRequestRMQ() {
+    fun sendSocketMessage() {
+        logger.info("[CLIENT] : отправка запроса на получение RSA ключа")
+        val socket = Socket("localhost", 9091)
+        socket.soTimeout = 6000000
+
+        val dataOut = DataOutputStream(socket.getOutputStream())
+        val dataIn = DataInputStream(socket.getInputStream())
+
+        dataOut.writeInt(1)
+        dataOut.writeUTF("Hi from client PC [SOCKET MESSAGE]")
+        dataOut.flush()
+
+        val publicRSAKey = dataIn.readUTF()
+        logger.info("[CLIENT] : шифрование и отправка данных")
+        val encodeMessage = encodeMessage(publicRSAKey)
+
+        dataOut.writeInt(2)
+        val toJson = Gson().toJson(encodeMessage)
+        dataOut.writeUTF(toJson)
+        dataOut.flush()
+
+        dataOut.writeInt(-1)
+        dataOut.flush()
+
+        dataIn.close()
+        dataOut.close()
+        socket.close()
+    }
+
+
+    fun sendReceiveRMQMessage() {
         logger.info("[CLIENT] : отправка запроса на получение RSA ключа")
         val publicRSAKey: String?
         try {
             publicRSAKey =
-                rabbitTemplate.convertSendAndReceive(REQUEST_QUEUE, "Hi from client PC! Дай ключ") as String?
+                rabbitTemplate.convertSendAndReceive(REQUEST_QUEUE, "Hi from client PC! [RMQ MESSAGE]") as String?
         } catch (e: Exception) {
             logger.warn("[CLIENT] : ошибка при отправке или получении запроса к серверу")
             return
         }
 
         logger.info("[CLIENT] : шифрование и отправка данных")
-        val extractData = extractData()
-        val preparedMessage = publicRSAKey?.let { encodeMessage(it, extractData.toString()) }
+        val preparedMessage = publicRSAKey?.let { encodeMessage(it) }
         if (preparedMessage != null) {
             val orderJson: String = objectMapper.writeValueAsString(preparedMessage)
             val message1: Message = MessageBuilder
@@ -115,3 +147,5 @@ class MessageSendService(
         }
     }
 }
+
+

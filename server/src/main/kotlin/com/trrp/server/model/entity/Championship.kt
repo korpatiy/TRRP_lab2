@@ -1,4 +1,4 @@
-package com.trrp.server.model
+package com.trrp.server.model.entity
 
 import java.time.LocalDate
 import javax.persistence.*

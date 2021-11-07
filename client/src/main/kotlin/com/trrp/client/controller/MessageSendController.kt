@@ -11,13 +11,13 @@ class MessageSendController(
     private val messageSender: MessageSendService
 ) {
 
-    /* @GetMapping("/v1")
-     fun sendServletMessage() {
-         messageSender.send(TestModel(testMessage = "test message"))
-     }*/
+    @GetMapping("/v1")
+    fun sendServletMessage() {
+        messageSender.sendSocketMessage()
+    }
 
     @GetMapping("/v2")
     fun sendRabbitMessage() {
-        messageSender.sendReceiveRequestRMQ()
+        messageSender.sendReceiveRMQMessage()
     }
 }
