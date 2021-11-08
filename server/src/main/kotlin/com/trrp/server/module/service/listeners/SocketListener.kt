@@ -12,14 +12,14 @@ import java.io.DataOutputStream
 import java.net.ServerSocket
 import java.net.Socket
 
-@Component
+//@Component
 class SocketListener(
     private val messageReceiveService: MessageReceiveService
 ) {
 
     private val logger = LoggerFactory.getLogger(SocketListener::class.java)
 
-    @Bean
+    //@Bean
     fun serverBuild() {
         val serverPort = 9090
         val serverSocket = ServerSocket(serverPort)
