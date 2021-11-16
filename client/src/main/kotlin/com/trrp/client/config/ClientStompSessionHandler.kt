@@ -16,9 +16,6 @@ class ClientStompSessionHandler : StompSessionHandlerAdapter() {
         private var stompSession: StompSession? = null
     }
 
-    fun send() {
-        val send = stompSession?.send("/app/request-without-response", "hi")
-    }
 
     override fun afterConnected(session: StompSession, headers: StompHeaders) {
         logger.info("Client connected: headers {}", headers)

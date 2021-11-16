@@ -3,19 +3,18 @@ package com.trrp.server.module.service
 import com.trrp.server.model.RSAGen
 import com.trrp.server.model.dtos.DataMessageDTO
 import org.slf4j.LoggerFactory
-import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.stereotype.Component
 import java.util.*
 
 
 @Component
-class MessageReceiveService(
+class MessageHandleService(
     private val migrationService: MigrationService,
     private val messageDecoderService: MessageDecoderService
 ) {
 
     companion object {
-        private val logger = LoggerFactory.getLogger(MessageReceiveService::class.java)
+        private val logger = LoggerFactory.getLogger(MessageHandleService::class.java)
         private lateinit var rsaGen: RSAGen
     }
 

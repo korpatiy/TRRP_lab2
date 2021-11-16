@@ -13,3 +13,6 @@ spring:
     password: guest
 server:
   port: 9090
+simple-socket:
+  enabled: false
+  port: 9091

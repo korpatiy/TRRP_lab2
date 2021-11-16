@@ -1,10 +1,10 @@
 package com.trrp.server.module.service.listeners
 
 import com.google.gson.Gson
-import com.trrp.server.model.RSAGen
+import com.trrp.server.config.SimpleSocketProperties
 import com.trrp.server.model.dtos.DataMessageDTO
-import com.trrp.server.module.service.MessageReceiveService
-import org.slf4j.LoggerFactory
+import com.trrp.server.module.service.MessageHandleService
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.stereotype.Component
 import java.io.DataInputStream
@@ -12,42 +12,64 @@ import java.io.DataOutputStream
 import java.net.ServerSocket
 import java.net.Socket
 
-//@Component
+@ConditionalOnProperty("simple-socket.enabled", havingValue = "true")
+@Component
 class SocketListener(
-    private val messageReceiveService: MessageReceiveService
+    private val simpleSocketProperties: SimpleSocketProperties,
+    private val messageHandleService: MessageHandleService
 ) {
+    companion object {
+        private lateinit var serverSocket: ServerSocket
+    }
 
-    private val logger = LoggerFactory.getLogger(SocketListener::class.java)
-
-    //@Bean
-    fun serverBuild() {
-        val serverPort = 9090
-        val serverSocket = ServerSocket(serverPort)
-        serverSocket.soTimeout = 600000
-        logger.info("[SERVER] : слушаю сообщения через сокеты...")
-        val socket: Socket = serverSocket.accept()
-        val dataIn = DataInputStream(socket.getInputStream())
-        val dataOut = DataOutputStream(socket.getOutputStream())
+    @Bean
+    fun start() {
+        val serverSocket = ServerSocket(simpleSocketProperties.port)
         while (true) {
+            SocketHandler(messageHandleService, serverSocket.accept()).start()
+        }
+    }
+
+    fun stop() {
+        serverSocket.close()
+    }
+}
+
+class SocketHandler(
+    private val messageHandleService: MessageHandleService,
+    private val socket: Socket
+) : Thread() {
+
+    companion object {
+        private lateinit var dataIn: DataInputStream
+        private lateinit var dataOut: DataOutputStream
+    }
+
+    override fun run() {
+        dataIn = DataInputStream(socket.getInputStream())
+        while (true)
             when (dataIn.readInt()) {
-                1 -> {
-                    dataOut.writeUTF(messageReceiveService.receiveRequestMessage(dataIn.readUTF()) ?: "")
-                    dataOut.flush()
-                }
-                2 -> {
-                    messageReceiveService.receiveDataMessage(
-                        Gson().fromJson(
-                            dataIn.readUTF(),
-                            DataMessageDTO::class.java
-                        )
-                    )
-                }
+                1 -> receiveRequestMessage(dataIn, socket)
+                2 -> receiveDataMessage(dataIn)
                 else -> break
             }
-        }
+        socket.close()
         dataIn.close()
         dataOut.close()
-        socket.close()
-        serverSocket.close()
+    }
+
+    private fun receiveRequestMessage(dataIn: DataInputStream, socket: Socket) {
+        dataOut = DataOutputStream(socket.getOutputStream())
+        dataOut.writeUTF(messageHandleService.receiveRequestMessage(dataIn.readUTF()) ?: "")
+        dataOut.flush()
+    }
+
+    private fun receiveDataMessage(dataIn: DataInputStream) {
+        messageHandleService.receiveDataMessage(
+            Gson().fromJson(
+                dataIn.readUTF(),
+                DataMessageDTO::class.java
+            )
+        )
     }
 }

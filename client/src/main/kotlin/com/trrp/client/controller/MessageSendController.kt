@@ -1,8 +1,7 @@
 package com.trrp.client.controller
 
 import com.trrp.client.config.ClientStompSessionHandler
-import com.trrp.client.service.MessageSendService
-import org.springframework.messaging.converter.MappingJackson2MessageConverter
+import com.trrp.client.service.SendReceiveService
 import org.springframework.messaging.converter.StringMessageConverter
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -19,23 +18,28 @@ import java.util.ArrayList
 @RestController
 @RequestMapping("/api")
 class MessageSendController(
-    private val messageSender: MessageSendService,
+    private val senderReceive: SendReceiveService,
     private val clientStompSessionHandler: ClientStompSessionHandler
 ) {
 
     @GetMapping("/v1")
-    fun sendServletMessage() {
+    fun sendServletMessage(){
+        senderReceive.sendSocketMessage()
+    }
+
+    @GetMapping("/v2")
+    fun sendRabbitMessage() {
+        senderReceive.sendReceiveRMQMessage()
+    }
+
+    @GetMapping("/v3")
+    fun sendWebServletMessage() {
         val transports: MutableList<Transport> = ArrayList<Transport>()
         transports.add(WebSocketTransport(StandardWebSocketClient()))
         transports.add(RestTemplateXhrTransport())
         val webSocketStompClient = WebSocketStompClient(SockJsClient(transports))
         webSocketStompClient.messageConverter = StringMessageConverter()
         webSocketStompClient.connect("ws://localhost:9090/websocket-sockjs-stomp", clientStompSessionHandler)
-        clientStompSessionHandler.send()
-    }
-
-    @GetMapping("/v2")
-    fun sendRabbitMessage() {
-        messageSender.sendReceiveRMQMessage()
+        //clientStompSessionHandler.send()
     }
 }
