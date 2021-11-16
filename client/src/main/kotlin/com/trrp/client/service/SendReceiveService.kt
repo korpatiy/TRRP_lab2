@@ -1,61 +1,54 @@
 package com.trrp.client.service
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.google.gson.Gson
+import com.trrp.client.config.MessageHandlerContract
+import com.trrp.client.config.SimpleSocketMessageHandler
 import org.slf4j.LoggerFactory
-import org.springframework.amqp.core.Message
-import org.springframework.amqp.core.MessageBuilder
-import org.springframework.amqp.core.MessageProperties
-import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.stereotype.Service
-import java.io.DataInputStream
-import java.net.Socket
-
-import java.io.DataOutputStream
 
 @Service
 class SendReceiveService(
-    private val rabbitTemplate: RabbitTemplate,
-    private val objectMapper: ObjectMapper,
-    private val encodeMessageService: EncodeMessageService
+    private val encodeMessageService: EncodeMessageService,
+    private val messageHandlers: List<MessageHandlerContract>
 ) {
 
     companion object {
-        private const val REQUEST_QUEUE = "request-queue"
-        private const val DATA_QUEUE = "data-queue"
         private val logger = LoggerFactory.getLogger(SendReceiveService::class.java)
     }
 
-
-    fun sendSocketMessage() {
-        val socket = Socket("localhost", 9091)
-        socket.soTimeout = 6000000
-
-        val dataOut = DataOutputStream(socket.getOutputStream())
-        val dataIn = DataInputStream(socket.getInputStream())
-
-        dataOut.writeInt(1)
-        dataOut.writeUTF("Hi from client PC [SOCKET MESSAGE]")
-        dataOut.flush()
-
-        val publicRSAKey = dataIn.readUTF()
-        val encodeMessage = encodeMessageService.encodeMessage(publicRSAKey)
-
-        dataOut.writeInt(2)
-        val toJson = Gson().toJson(encodeMessage)
-        dataOut.writeUTF(toJson)
-        dataOut.flush()
-
-        dataOut.writeInt(-1)
-        dataOut.flush()
-
-        dataIn.close()
-        dataOut.close()
-        socket.close()
+    fun sendMessageByType(type: String) {
+        messageHandlers.firstOrNull { it.getType(type) }?.let {
+            logger.info("[CLIENT] : подключение к серверу...")
+            val publicRSAKey: String?
+            try {
+                publicRSAKey = it.connect()
+            } catch (e: Exception) {
+                logger.warn("[CLIENT] : ошибка при отправке или получении запроса к серверу")
+                return
+            }
+            logger.info("[CLIENT] : шифрование и отправка данных")
+            val encodeMessage = publicRSAKey?.let { it1 -> encodeMessageService.encodeMessage(it1) }
+            if (encodeMessage != null) {
+                try {
+                    it.sendData(encodeMessage)
+                } catch (e: Exception) {
+                    logger.warn("[CLIENT] : ошибка при отправке или получении запроса к серверу")
+                    return
+                }
+                logger.info("[CLIENT] : данные отправлены")
+            }
+            if (it is SimpleSocketMessageHandler)
+                it.disconnect()
+        }
     }
 
+    /*fun sendSocketMessage() {
+        val publicRSAKey = simpleSocketHandler.connect()
+        val encodeMessage = encodeMessageService.encodeMessage(publicRSAKey)
+        simpleSocketHandler.sendMessage(encodeMessage)
+        simpleSocketHandler.disconnect()
+    }
 
-    fun sendReceiveRMQMessage() {
+    fun sendRMQMessage() {
         logger.info("[CLIENT] : отправка запроса на получение RSA ключа")
         val publicRSAKey: String?
         try {
@@ -70,19 +63,20 @@ class SendReceiveService(
         val preparedMessage = publicRSAKey?.let { encodeMessageService.encodeMessage(it) }
         if (preparedMessage != null) {
             val orderJson: String = objectMapper.writeValueAsString(preparedMessage)
-            val message1: Message = MessageBuilder
-                .withBody(orderJson.toByteArray())
-                .setContentType(MessageProperties.CONTENT_TYPE_JSON)
-                .build()
             try {
-                rabbitTemplate.convertAndSend(DATA_QUEUE, message1)
+                rabbitTemplate.convertAndSend(
+                    DATA_QUEUE, MessageBuilder
+                        .withBody(orderJson.toByteArray())
+                        .setContentType(MessageProperties.CONTENT_TYPE_JSON)
+                        .build()
+                )
             } catch (e: Exception) {
                 logger.warn("[CLIENT] : ошибка при отправке или получении запроса к серверу")
                 return
             }
             logger.info("[CLIENT] : данные отправлены")
         }
-    }
+    }*/
 }
 
 

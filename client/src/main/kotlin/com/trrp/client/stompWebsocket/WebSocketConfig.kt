@@ -1,5 +1,6 @@
-package com.trrp.client.config
+package com.trrp.client.stompWebsocket
 
+import com.trrp.client.config.SimpleSocketProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.messaging.converter.MappingJackson2MessageConverter
@@ -16,9 +17,10 @@ import org.springframework.web.socket.sockjs.client.WebSocketTransport
 
 import java.util.ArrayList
 
-
-//@Configuration
-class WebSocketConfig {
+@Configuration
+class WebSocketConfig(
+    private val simpleSocketProperties: SimpleSocketProperties
+) {
 
     //@Bean
     fun webSocketStompClient(
@@ -31,7 +33,7 @@ class WebSocketConfig {
         return webSocketStompClient
     }
 
-    //@Bean
+    @Bean
     fun webSocketClient(): WebSocketClient {
         val transports: MutableList<Transport> = ArrayList<Transport>()
         transports.add(WebSocketTransport(StandardWebSocketClient()))
@@ -39,7 +41,7 @@ class WebSocketConfig {
         return SockJsClient(transports)
     }
 
-    //@Bean
+    @Bean
     fun stompSessionHandler(): StompSessionHandler? {
         return ClientStompSessionHandler()
     }

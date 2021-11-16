@@ -1,4 +1,4 @@
-package com.trrp.client.config
+package com.trrp.client.stompWebsocket
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -16,18 +16,16 @@ class ClientStompSessionHandler : StompSessionHandlerAdapter() {
         private var stompSession: StompSession? = null
     }
 
-
     override fun afterConnected(session: StompSession, headers: StompHeaders) {
         logger.info("Client connected: headers {}", headers)
         session.subscribe("/queue/responses", this)
         session.subscribe("/queue/errors", this)
-        val message = "Hi from client PC!"
+        val message = "Hi from client PC! [WebSocket]"
         stompSession = session
         session.send("/app/request", message)
     }
 
     override fun handleFrame(headers: StompHeaders, payload: Any?) {
-        val s = payload as String
         logger.info("Client received: payload {}, headers {}", payload.toString(), headers)
     }
 
