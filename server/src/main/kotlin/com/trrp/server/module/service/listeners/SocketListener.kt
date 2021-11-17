@@ -25,9 +25,8 @@ class SocketListener(
     @Bean
     fun start() {
         val serverSocket = ServerSocket(simpleSocketProperties.port)
-        while (true) {
-            SocketHandler(messageHandleService, serverSocket.accept()).start()
-        }
+        while (true)
+            SocketHandler(messageHandleService, serverSocket.accept()).run()
     }
 
     fun stop() {
@@ -38,14 +37,14 @@ class SocketListener(
 class SocketHandler(
     private val messageHandleService: MessageHandleService,
     private val socket: Socket
-) : Thread() {
+) {
 
     companion object {
         private lateinit var dataIn: DataInputStream
         private lateinit var dataOut: DataOutputStream
     }
 
-    override fun run() {
+    fun run() {
         dataIn = DataInputStream(socket.getInputStream())
         while (true)
             when (dataIn.readInt()) {

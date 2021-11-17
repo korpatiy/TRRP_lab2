@@ -88,12 +88,11 @@ class SimpleSocketMessageHandler(
         val toJson = Gson().toJson(encodeMessage)
         dataOut.writeUTF(toJson)
         dataOut.flush()
-
-        dataOut.writeInt(-1)
-        dataOut.flush()
     }
 
     fun disconnect() {
+        dataOut.writeInt(-1)
+        dataOut.flush()
         dataIn.close()
         dataOut.close()
         socket.close()

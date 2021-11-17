@@ -7,8 +7,8 @@ import org.springframework.web.socket.config.annotation.StompEndpointRegistry
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer
 
 
-@Configuration
-@EnableWebSocketMessageBroker
+//@Configuration
+//@EnableWebSocketMessageBroker
 class StompWebSocketConfig : WebSocketMessageBrokerConfigurer {
     override fun registerStompEndpoints(registry: StompEndpointRegistry) {
         registry.addEndpoint("/websocket-sockjs-stomp")
