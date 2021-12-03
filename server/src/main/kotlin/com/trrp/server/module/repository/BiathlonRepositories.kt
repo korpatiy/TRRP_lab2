@@ -2,6 +2,7 @@ package com.trrp.server.module.repository
 
 import com.trrp.server.model.entity.*
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.repository.NoRepositoryBean
 import org.springframework.stereotype.Repository
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -11,8 +12,12 @@ interface ChampionshipRepository : JpaRepository<Championship, Long> {
     fun findByName(name: String): Championship?
 }
 
+@NoRepositoryBean
+interface TestRepo: JpaRepository<Test, Long>{
+}
+
 @Repository
-interface CityRepository : JpaRepository<City, Long> {
+interface CityRepository : TestRepo {
     fun findByName(name: String): City?
 }
 

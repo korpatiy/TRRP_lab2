@@ -26,7 +26,7 @@ class SocketListener(
     fun start() {
         val serverSocket = ServerSocket(simpleSocketProperties.port)
         while (true)
-            SocketHandler(messageHandleService, serverSocket.accept()).run()
+            SocketHandler(messageHandleService, serverSocket.accept()).listener()
     }
 
     fun stop() {
@@ -44,7 +44,7 @@ class SocketHandler(
         private lateinit var dataOut: DataOutputStream
     }
 
-    fun run() {
+    fun listener() {
         dataIn = DataInputStream(socket.getInputStream())
         while (true)
             when (dataIn.readInt()) {

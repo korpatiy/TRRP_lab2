@@ -14,5 +14,5 @@ spring:
 server:
   port: 9090
 simple-socket:
-  enabled: true
+  enabled: false
   port: 9091

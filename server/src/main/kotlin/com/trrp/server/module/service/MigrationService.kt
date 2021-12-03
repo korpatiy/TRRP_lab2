@@ -35,7 +35,8 @@ class MigrationService(
             val cityName = it["city_name"] ?: ""
             var city = cityRepository.findByName(cityName)
             if (city == null) {
-                city = City(name = cityName, country = country)
+                city = City(country = country)
+                city.name = cityName
                 cityRepository.save(city)
             }
 
