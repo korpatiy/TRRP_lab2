@@ -16,3 +16,7 @@ server:
 simple-socket:
   enabled: false
   port: 9091
+
+grpc:
+  server:
+    port: 9092

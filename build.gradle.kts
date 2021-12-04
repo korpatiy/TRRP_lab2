@@ -9,6 +9,7 @@ buildscript {
 plugins {
     id("org.springframework.boot") version "2.3.12.RELEASE" apply false
     id("io.spring.dependency-management") version "1.0.11.RELEASE" apply false
+    id("com.google.protobuf") version "0.8.11" apply false
 
     kotlin("jvm") version "1.5.31" apply false
     kotlin("plugin.spring") version "1.5.31" apply false

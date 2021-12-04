@@ -1,7 +1,15 @@
+import com.google.protobuf.gradle.*
+
+
 plugins {
     id("org.springframework.boot")
     kotlin("jvm")
     kotlin("plugin.spring")
+    id ("com.google.protobuf")
+}
+
+sourceSets.main{
+    java.srcDirs("build/generated/source/proto/main/grpc", "build/generated/source/proto/main/java")
 }
 
 dependencies {
@@ -21,5 +29,30 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+
+    //implementation("io.github.lognet:grpc-spring-boot-starter:4.5.10")
+    implementation("net.devh:grpc-server-spring-boot-starter:2.13.0.RELEASE")
 }
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:3.10.0"
+    }
+
+    plugins {
+        id("grpc") {
+            artifact = "io.grpc:protoc-gen-grpc-java:1.25.0"
+        }
+    }
+
+    generateProtoTasks {
+        ofSourceSet("main").forEach { generateProtoTask ->
+            generateProtoTask
+                .plugins {
+                    id("grpc")
+                }
+        }
+    }
+}
+
 
