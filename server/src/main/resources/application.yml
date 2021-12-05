@@ -20,3 +20,6 @@ simple-socket:
 grpc:
   server:
     port: 9092
+    security:
+      certificate-chain: certs/server.crt
+      private-key: certs/server.key

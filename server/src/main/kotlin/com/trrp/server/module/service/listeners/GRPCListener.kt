@@ -10,6 +10,10 @@ import net.devh.boot.grpc.server.service.GrpcService
 class GRPCListener : MigrationGRPCServiceGrpc.MigrationGRPCServiceImplBase() {
 
     override fun migrateData(request: Request?, responseObserver: StreamObserver<Reply>?) {
-        val toString = request.toString()
+        val message = request?.message
+        responseObserver?.onNext(
+            Reply.newBuilder().setMessage("hi").build()
+        )
+        responseObserver?.onCompleted()
     }
 }
