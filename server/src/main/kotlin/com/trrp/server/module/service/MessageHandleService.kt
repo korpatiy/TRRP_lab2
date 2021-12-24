@@ -37,13 +37,13 @@ class MessageHandleService(
             }
         }
         logger.info("[SERVER] : расшифрованное сообщение $decodeMessage")
-        if (decodeMessage.isNotEmpty()) {
+        /*if (decodeMessage.isNotEmpty()) {
             try {
-                migrationService.migrate(decodeMessage)
+                migrationService.migrate(null)
             } catch (e: Exception) {
                 logger.warn("[SERVER] : возникла ошибка при миграции данных")
             }
-        }
+        }*/
         logger.info("[SERVER] : данные успешно перенесены")
     }
 }

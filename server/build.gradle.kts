@@ -32,6 +32,8 @@ dependencies {
 
     //implementation("io.github.lognet:grpc-spring-boot-starter:4.5.10")
     implementation("net.devh:grpc-server-spring-boot-starter:2.13.0.RELEASE")
+    implementation("io.grpc:grpc-netty-shaded:1.42.1")
+    implementation("io.netty:netty-tcnative-boringssl-static:2.0.46.Final")
 }
 
 protobuf {

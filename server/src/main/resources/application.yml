@@ -12,14 +12,23 @@ spring:
     username: guest
     password: guest
 server:
-  port: 9090
+  port: 9092
 simple-socket:
   enabled: false
   port: 9091
 
+
 grpc:
   server:
-    port: 9092
+    port: 8443
     security:
-      certificate-chain: certs/server.crt
-      private-key: certs/server.key
+      private-key: classpath:certs/server.key
+      certificate-chain: classpath:certs/server.crt
+      enabled: true
+    address: 10.242.0.1
+
+#grpc:
+#  port: 9092
+#  security:
+#    cert-chain: classpath:certs/server.crt
+#    private-key: classpath:certs/server.key
